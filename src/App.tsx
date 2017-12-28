@@ -1,12 +1,14 @@
 import * as React from 'react';
 import { Platform, StyleSheet, Text, View } from 'react-native';
+import { Widget } from './Widget';
 
-export default class App extends React.Component<object, object> {
+interface Props { }
+interface State { }
+
+export default class App extends React.Component<Props, State> {
   render() {
     return (
-      <View style={styles.container}>
-        <Text style={styles.text}> Decorator Test </Text>
-      </View>
+      <Widget prop1='Yo' />
     );
   }
 }
