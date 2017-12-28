@@ -9,6 +9,38 @@ interface State {
   state1: string 
 }
 
+function guidClassDecorator(guid: string) {
+
+  // Generate instances of a class
+  function construct(constructor, args) {
+    var c: any = function () { return constructor.apply(this, args);  }
+    c.prototype = constructor.prototype;
+    return new c();
+  }
+
+  function classDecorator(target: any, guid: string) {
+    var original = target;
+
+    // New constructor function
+    var f: any = function (...args) {
+      console.log("[Decorator] New: " + original.name); 
+      var newObj  = construct(original, args);
+      newObj.__classDecorator_guid = guid;
+      return newObj;
+    }
+  
+    // copy prototype so intanceof operator still works
+    f.prototype = original.prototype;
+  
+    // return new constructor (will override original)
+    return f;
+  }
+
+  return (target) => classDecorator(target, guid);
+
+}
+
+@guidClassDecorator('1234-5678')
 export class Widget extends React.Component<Props, State> {
   constructor(props) {
     super(props);
@@ -20,11 +52,12 @@ export class Widget extends React.Component<Props, State> {
   }
 
   render() {
+    console.log('Render: ', this['__classDecorator_guid']);
     return (
       <View style={styles.container}>
         <Text style={styles.text}> A Widget </Text>
-        <Text style={styles.text}> Prop1: { this.props.prop1  } </Text>
-        <Text style={styles.text}> State: { this.state.state1  } </Text>
+        <Text style={styles.text}> Prop1: { this.props.prop1 } </Text>
+        <Text style={styles.text}> State: { this.state.state1 } </Text>
       </View>
     );
   }
