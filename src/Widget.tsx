@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { Platform, StyleSheet, Text, View, Button } from 'react-native';
-import { start } from 'repl';
 
 function MrCloud(guid:string, sharedStates:string[]) {
 
