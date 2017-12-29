@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { Platform, StyleSheet, Text, View, Button } from 'react-native';
+import { start } from 'repl';
 
-function MrCloud(guid:string, sharedState:string[]) {
+function MrCloud(guid:string, sharedStates:string[]) {
 
   // Generate instances of a class
   function construct(constructor, args) {
@@ -10,19 +11,33 @@ function MrCloud(guid:string, sharedState:string[]) {
     return new c();
   }
 
-  function classDecorator(constructor:any, guid:string, sharedState:string[]) {
+  // Send state to other instances
+  function sendState(guid, key, value) {
+    console.log("sendState: " + key + " = " + value + " (" + guid + ")");
+    // TODO - socket.io to server
+  }
+
+  function classDecorator(constructor:any, guid:string, sharedStates:string[]) {
     var originalConstructor = constructor;
     var guid = guid;
+    var sharedState:string[] = sharedState;
 
     // New constructor function
     var f:any = function (...args) {
       console.log("[Decorator] New: " + originalConstructor.name); 
-      var newObj = construct(originalConstructor, args);
+      let newObj = construct(originalConstructor, args);
       // Hook setState
-      var originalSetState = newObj['setState'];
+      let originalSetState = newObj['setState'];
       newObj['setState'] = function(...args) {
-        console.log("[Decorator] SetState guid: ", guid);
-        console.log("[Decorator] SetState arg0: ", args[0]);
+        let stateObj = args[0];
+        //console.log("[Decorator] SetState guid: ", guid);
+        //console.log("[Decorator] SetState arg0: ", stateObj);
+        for (let sharedState of sharedStates) {
+          if (sharedState in stateObj) {
+            // console.log("[Decorator] SetState match: ", sharedState);
+            sendState(guid, sharedState, stateObj[sharedState]);
+          }
+        }
         originalSetState.apply(newObj, args);
       }
       return newObj;
@@ -35,7 +50,7 @@ function MrCloud(guid:string, sharedState:string[]) {
     return f;
   }
 
-  return (target) => classDecorator(target, guid, sharedState);
+  return (target) => classDecorator(target, guid, sharedStates);
 }
 
 interface Props {
@@ -43,18 +58,20 @@ interface Props {
 }
 
 interface State {
-  state1:number 
+  state1:number,
+  state2:string 
+ 
 }
 
 @MrCloud('1234-5678', ['state1'])
 export class Widget extends React.Component<Props, State> {
   constructor(props) {
     super(props);
-    this.state = { state1: 0 };
+    this.state = { state1: 0, state2: 'constructor' };
   }
 
   componentDidMount() { 
-    this.setState( { state1: 1 });
+    this.setState( { state1: 1, state2: 'didMount' });
   }
 
   render() {
