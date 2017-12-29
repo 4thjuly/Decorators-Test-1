@@ -16,29 +16,28 @@ function MrCloud(guid:string, sharedStates:string[]) {
     // TODO - socket.io to server
   }
 
-  function classDecorator(constructor:any, guid:string, sharedStates:string[]) {
-    var originalConstructor = constructor;
-    var guid = guid;
-    var sharedState:string[] = sharedState;
-
-    // New constructor function
-    var f:any = function (...args) {
-      console.log("[Decorator] New: " + originalConstructor.name); 
-      let newObj = construct(originalConstructor, args);
+  // Hook setState of obj for states in sharedStates
+  function hookSetState(obj, sharedStates, guid) {
       // Hook setState
-      let originalSetState = newObj['setState'];
-      newObj['setState'] = function(...args) {
+      let originalSetState = obj['setState'];
+      obj['setState'] = function(...args) {
         let stateObj = args[0];
-        //console.log("[Decorator] SetState guid: ", guid);
-        //console.log("[Decorator] SetState arg0: ", stateObj);
         for (let sharedState of sharedStates) {
           if (sharedState in stateObj) {
-            // console.log("[Decorator] SetState match: ", sharedState);
             sendState(guid, sharedState, stateObj[sharedState]);
           }
         }
-        originalSetState.apply(newObj, args);
+        originalSetState.apply(obj, args);
       }
+  }
+
+  function classDecorator(originalConstructor:any, guid:string, sharedStates:string[]) {
+
+    // New constructor function, hooking setState
+    var f:any = function (...args) {
+      console.log("[Decorator] New: " + originalConstructor.name); 
+      let newObj = construct(originalConstructor, args);
+      hookSetState(newObj, sharedStates, guid);
       return newObj;
     }
 
