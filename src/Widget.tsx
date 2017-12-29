@@ -1,27 +1,28 @@
 import * as React from 'react';
 import { Platform, StyleSheet, Text, View, Button } from 'react-native';
 
-function MrCloud(guid: string, sharedState: string[]) {
+function MrCloud(guid:string, sharedState:string[]) {
 
   // Generate instances of a class
   function construct(constructor, args) {
-    var c: any = function () { return constructor.apply(this, args);  }
+    var c:any = function () { return constructor.apply(this, args);  }
     c.prototype = constructor.prototype;
     return new c();
   }
 
-  function classDecorator(constructor: any, guid: string, sharedState: string[]) {
+  function classDecorator(constructor:any, guid:string, sharedState:string[]) {
     var originalConstructor = constructor;
+    var guid = guid;
 
     // New constructor function
-    var f: any = function (...args) {
+    var f:any = function (...args) {
       console.log("[Decorator] New: " + originalConstructor.name); 
       var newObj = construct(originalConstructor, args);
-      newObj.__classDecorator_guid = guid;
       // Hook setState
       var originalSetState = newObj['setState'];
       newObj['setState'] = function(...args) {
-        console.log("[Decorator] SetState: ", args[0]);
+        console.log("[Decorator] SetState guid: ", guid);
+        console.log("[Decorator] SetState arg0: ", args[0]);
         originalSetState.apply(newObj, args);
       }
       return newObj;
@@ -38,14 +39,14 @@ function MrCloud(guid: string, sharedState: string[]) {
 }
 
 interface Props {
-  prop1: string
+  prop1:string
 }
 
 interface State {
-  state1: number 
+  state1:number 
 }
 
-@MrCloud('1234-5678', ['state1'] )
+@MrCloud('1234-5678', ['state1'])
 export class Widget extends React.Component<Props, State> {
   constructor(props) {
     super(props);
@@ -57,7 +58,6 @@ export class Widget extends React.Component<Props, State> {
   }
 
   render() {
-    console.log('Render: ', this['__classDecorator_guid']);
     return (
       <View style={styles.container}>
         <Text style={styles.text}> A Widget </Text>
